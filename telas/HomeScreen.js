@@ -13,6 +13,10 @@ const HomeScreen = ({ navigation }) => {
         title="pingpong"
         onPress={() => navigation.navigate('PingPong')}
       />
+      <Button
+        title="Usuários"
+        onPress={() => navigation.navigate('Usuarios')}
+      />
     </View>
   );
 };
