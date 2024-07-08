@@ -4,9 +4,9 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { StatusBar, useColorScheme } from 'react-native';
 import SQLite from 'react-native-sqlite-storage';
 
-import HomeScreen from './src/telas/HomeScreen';
-import AboutScreen from './src/telas/AboutScreen';
-import UserInfoScreen from './src/telas/UserInfoScreen';
+import HomeScreen from './telas/HomeScreen';
+import AboutScreen from './telas/AboutScreen';
+import UserInfoScreen from './telas/UserInfoScreen';
 
 SQLite.DEBUG(true);
 SQLite.enablePromise(true);
