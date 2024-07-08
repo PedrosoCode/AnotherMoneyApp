@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import { StatusBar, useColorScheme } from 'react-native';
+import { StatusBar, useColorScheme, View, Text, StyleSheet } from 'react-native';
 import SQLite from 'react-native-sqlite-storage';
 
 import HomeScreen from './telas/HomeScreen';
 import AboutScreen from './telas/AboutScreen';
 import UserInfoScreen from './telas/UserInfoScreen';
+import PingPongScreen from './telas/PingPongScreen';
 
 SQLite.DEBUG(true);
 SQLite.enablePromise(true);
@@ -35,8 +36,18 @@ const openDatabase = async () => {
           nome TEXT NOT NULL
         );
       `);
+
+      tx.executeSql(`
+        CREATE TABLE IF NOT EXISTS pingpong (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          value TEXT NOT NULL
+        );
+      `);
+
+      tx.executeSql(`INSERT INTO pingpong (value) VALUES ('ping');`);
+      tx.executeSql(`INSERT INTO pingpong (value) VALUES ('pong');`);
     });
-    console.log("Table tb_usuario created or already exists");
+    console.log("Tables created or already exist");
   } catch (error) {
     console.log(error);
   }
@@ -81,6 +92,7 @@ const App = () => {
         <Stack.Screen name="UserInfo" component={UserInfoScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="About" component={AboutScreen} />
+        <Stack.Screen name="PingPong" component={PingPongScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
