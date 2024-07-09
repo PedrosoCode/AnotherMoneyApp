@@ -8,6 +8,8 @@ import HomeScreen from './telas/HomeScreen';
 import AboutScreen from './telas/AboutScreen';
 import CadastroUsuarioScreen from './telas/CadastroUsuarioScreen';
 import UsuariosScreen from './telas/UsuariosScreen';
+import PingPongScreen from './telas/PingPongScreen';
+import CadastroMaquinaScreen from './telas/CadastroMaquinaScreen';
 
 SQLite.DEBUG(true);
 SQLite.enablePromise(false);
@@ -36,39 +38,18 @@ const openDatabase = (callback) => {
   );
 };
 
-const checkFirstAccess = (callback) => {
-  db.transaction(tx => {
-    tx.executeSql('SELECT primeiro_acesso FROM tb_primeiro_acesso WHERE id=1', [], (tx, res) => {
-      callback(res.rows.item(0).primeiro_acesso === 1);
-    });
-  });
-};
-
 const Stack = createStackNavigator();
 
 const App = () => {
-  const [initialRoute, setInitialRoute] = useState(null);
+  const [initialRoute, setInitialRoute] = useState('Home');
   const isDarkMode = useColorScheme() === 'dark';
 
   useEffect(() => {
     openDatabase(() => {
-      checkFirstAccess((isFirstAccess) => {
-        if (isFirstAccess) {
-          setInitialRoute('CadastroUsuario');
-        } else {
-          setInitialRoute('Home');
-        }
-      });
+      // Database is opened, you can perform any necessary operations here
+      // For this example, we're setting the initial route directly to "Home"
     });
   }, []);
-
-  if (initialRoute === null) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" color="#0000ff" />
-      </View>
-    );
-  }
 
   const backgroundStyle = {
     backgroundColor: isDarkMode ? '#333' : '#FFF',
@@ -84,7 +65,9 @@ const App = () => {
         <Stack.Screen name="CadastroUsuario" component={CadastroUsuarioScreen} />
         <Stack.Screen name="Home" component={HomeScreen} />
         <Stack.Screen name="About" component={AboutScreen} />
-        <Stack.Screen name="Usuarios" component={UsuariosScreen} />
+        <Stack.Screen name="Usuarios" component={UsuariosScreen} /> 
+        <Stack.Screen name="PingPong" component={PingPongScreen} />
+        <Stack.Screen name="CadastroMaquina" component={CadastroMaquinaScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

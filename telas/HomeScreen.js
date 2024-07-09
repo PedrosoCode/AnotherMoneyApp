@@ -17,6 +17,10 @@ const HomeScreen = ({ navigation }) => {
         title="Usuários"
         onPress={() => navigation.navigate('Usuarios')}
       />
+       <Button
+        title="Cadastro de Máquina"
+        onPress={() => navigation.navigate('CadastroMaquina')}
+      />
     </View>
   );
 };
