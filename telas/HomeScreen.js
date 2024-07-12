@@ -21,9 +21,13 @@ const HomeScreen = ({ navigation }) => {
         title="Cadastro de Máquina"
         onPress={() => navigation.navigate('CadastroMaquina')}
       />
+      <Button
+        title="ListagemMaquinas de Máquina"
+        onPress={() => navigation.navigate('ListagemMaquinas')}
+      />
     </View>
   );
-};
+}; 
 
 const styles = StyleSheet.create({
   container: {

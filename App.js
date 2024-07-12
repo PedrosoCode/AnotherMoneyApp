@@ -11,6 +11,9 @@ import UsuariosScreen from './telas/UsuariosScreen';
 import PingPongScreen from './telas/PingPongScreen';
 import CadastroMaquinaScreen from './telas/CadastroMaquinaScreen';
 
+import ListagemMaquinasScreen from './telas/ListagemMaquinasScreen';
+import DetalhesMaquinaScreen from './telas/DetalhesMaquinaScreen';
+
 SQLite.DEBUG(true);
 SQLite.enablePromise(false);
 
@@ -68,6 +71,8 @@ const App = () => {
         <Stack.Screen name="Usuarios" component={UsuariosScreen} /> 
         <Stack.Screen name="PingPong" component={PingPongScreen} />
         <Stack.Screen name="CadastroMaquina" component={CadastroMaquinaScreen} />
+        <Stack.Screen name="ListagemMaquinas" component={ListagemMaquinasScreen} />
+        <Stack.Screen name="DetalhesMaquina" component={DetalhesMaquinaScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );

@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from 'react';
+// import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
 import SQLite from 'react-native-sqlite-storage';
@@ -19,12 +20,37 @@ const openDatabase = (callback) => {
     (database) => {
       db = database;
       console.log("Database OPENED");
+      createTable(); // Chama a função para criar a tabela
       callback();
     },
     (error) => {
       console.error(error);
     }
   );
+};
+
+const createTable = () => {
+  db.transaction(tx => {
+    tx.executeSql(
+      `CREATE TABLE IF NOT EXISTS tb_cad_maquina (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        numero_serie TEXT,
+        modelo TEXT,
+        cor TEXT,
+        obs TEXT,
+        cliente TEXT,
+        contato TEXT,
+        imagem TEXT
+      );`,
+      [],
+      () => {
+        console.log("Tabela criada com sucesso");
+      },
+      error => {
+        console.log("Erro ao criar a tabela", error);
+      }
+    );
+  });
 };
 
 const CadastroMaquinaScreen = ({ navigation }) => {
