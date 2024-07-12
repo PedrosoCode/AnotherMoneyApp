@@ -1,57 +1,8 @@
-// import React, { useState, useEffect } from 'react';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
-import SQLite from 'react-native-sqlite-storage';
-
-const database_name = "appDB.sqlite";
-const database_version = "1.0";
-const database_displayname = "SQLite Database";
-const database_size = 1024 * 1024 * 1024;
-
-let db;
-
-const openDatabase = (callback) => {
-  SQLite.openDatabase(
-    {
-      name: database_name,
-      location: 'default',
-    },
-    (database) => {
-      db = database;
-      console.log("Database OPENED");
-      createTable(); // Chama a função para criar a tabela
-      callback();
-    },
-    (error) => {
-      console.error(error);
-    }
-  );
-};
-
-const createTable = () => {
-  db.transaction(tx => {
-    tx.executeSql(
-      `CREATE TABLE IF NOT EXISTS tb_cad_maquina (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        numero_serie TEXT,
-        modelo TEXT,
-        cor TEXT,
-        obs TEXT,
-        cliente TEXT,
-        contato TEXT,
-        imagem TEXT
-      );`,
-      [],
-      () => {
-        console.log("Tabela criada com sucesso");
-      },
-      error => {
-        console.log("Erro ao criar a tabela", error);
-      }
-    );
-  });
-};
+import { openDatabase, db } from '../db/db';
+import RNFS from 'react-native-fs';
 
 const CadastroMaquinaScreen = ({ navigation }) => {
   const [numeroSerie, setNumeroSerie] = useState('');
@@ -60,7 +11,7 @@ const CadastroMaquinaScreen = ({ navigation }) => {
   const [obs, setObs] = useState('');
   const [cliente, setCliente] = useState('');
   const [contato, setContato] = useState('');
-  const [imagem, setImagem] = useState(null);
+  const [imagemPath, setImagemPath] = useState(null);
 
   useEffect(() => {
     openDatabase(() => {
@@ -71,9 +22,8 @@ const CadastroMaquinaScreen = ({ navigation }) => {
   const pickImage = async () => {
     const result = await launchImageLibrary({
       mediaType: 'photo',
-      includeBase64: true,
-      maxHeight: 200,
-      maxWidth: 200,
+      includeBase64: false,
+      quality: 1,
     });
 
     if (result.didCancel) {
@@ -81,7 +31,18 @@ const CadastroMaquinaScreen = ({ navigation }) => {
     } else if (result.error) {
       console.log('ImagePicker Error: ', result.error);
     } else if (result.assets && result.assets.length > 0) {
-      setImagem(result.assets[0].base64);
+      const asset = result.assets[0];
+      const fileName = `${new Date().getTime()}_${asset.fileName}`;
+      const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+
+      // Save image to local storage
+      RNFS.copyFile(asset.uri, filePath)
+        .then(() => {
+          setImagemPath(filePath);
+        })
+        .catch(error => {
+          console.log('Error saving image: ', error);
+        });
     }
   };
 
@@ -91,16 +52,19 @@ const CadastroMaquinaScreen = ({ navigation }) => {
       return;
     }
 
+    console.log('Salvando máquina:', { numeroSerie, modelo, cor, obs, cliente, contato, imagemPath });
+
     db.transaction(tx => {
       tx.executeSql(
         'INSERT INTO tb_cad_maquina (numero_serie, modelo, cor, obs, cliente, contato, imagem) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [numeroSerie, modelo, cor, obs, cliente, contato, imagem],
+        [numeroSerie, modelo, cor, obs, cliente, contato, imagemPath],
         (tx, results) => {
+          console.log('Máquina cadastrada com sucesso:', results);
           Alert.alert('Sucesso', 'Máquina cadastrada com sucesso');
           navigation.navigate('Home');
         },
         (error) => {
-          console.log(error);
+          console.error('Erro ao cadastrar a máquina:', error);
           Alert.alert('Erro', 'Houve um erro ao cadastrar a máquina. Por favor, tente novamente.');
         }
       );
@@ -149,7 +113,7 @@ const CadastroMaquinaScreen = ({ navigation }) => {
       <TouchableOpacity onPress={pickImage}>
         <Text style={styles.button}>Escolher Imagem</Text>
       </TouchableOpacity>
-      {imagem && <Image source={{ uri: `data:image/jpeg;base64,${imagem}` }} style={{ width: 200, height: 200 }} />}
+      {imagemPath && <Image source={{ uri: `file://${imagemPath}` }} style={{ width: 200, height: 200 }} />}
       <Button
         title="Salvar Máquina"
         onPress={handleSave}

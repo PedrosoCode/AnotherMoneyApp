@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-import { openDatabase, db } from '../db/db'; // Assumindo que o arquivo se chama db.js
+import { openDatabase, db } from '../db/db'; // Ajuste o caminho conforme necessário
 
 const ListagemMaquinasScreen = () => {
   const [maquinas, setMaquinas] = useState([]);
@@ -10,21 +10,22 @@ const ListagemMaquinasScreen = () => {
 
   useEffect(() => {
     openDatabase(() => {
-      if (db) {
-        listarMaquinas();
-      }
+      listarMaquinas();
     });
   }, []);
 
   useEffect(() => {
     if (isFocused) {
-      if (db) {
-        listarMaquinas();
-      }
+      listarMaquinas();
     }
   }, [isFocused]);
 
   const listarMaquinas = () => {
+    if (!db) {
+      console.log("Database not initialized");
+      return;
+    }
+
     db.transaction(tx => {
       tx.executeSql(
         'SELECT * FROM tb_cad_maquina',
@@ -35,10 +36,11 @@ const ListagemMaquinasScreen = () => {
           for (let i = 0; i < rows.length; i++) {
             maquinas.push(rows.item(i));
           }
+          console.log('Máquinas recuperadas:', maquinas); // Log para verificação
           setMaquinas(maquinas);
         },
         (error) => {
-          console.log("Error: ", error);
+          console.log("Erro ao recuperar as máquinas:", error);
         }
       );
     });
@@ -48,7 +50,7 @@ const ListagemMaquinasScreen = () => {
     <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('DetalhesMaquina', { maquinaId: item.id })}>
       {item.imagem && (
         <Image
-          source={{ uri: `data:image/jpeg;base64,${item.imagem}` }}
+          source={{ uri: `file://${item.imagem}` }}
           style={styles.image}
         />
       )}
@@ -65,11 +67,15 @@ const ListagemMaquinasScreen = () => {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={maquinas}
-        renderItem={renderItem}
-        keyExtractor={(item) => item.id.toString()}
-      />
+      {maquinas.length === 0 ? (
+        <Text style={styles.emptyMessage}>Nenhuma máquina cadastrada</Text>
+      ) : (
+        <FlatList
+          data={maquinas}
+          renderItem={renderItem}
+          keyExtractor={(item) => item.id.toString()}
+        />
+      )}
     </View>
   );
 };
@@ -99,6 +105,11 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  emptyMessage: {
+    textAlign: 'center',
+    marginTop: 20,
+    fontSize: 18,
+  }
 });
 
 export default ListagemMaquinasScreen;

@@ -1,29 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, Image, TouchableOpacity, ScrollView } from 'react-native';
-import SQLite from 'react-native-sqlite-storage';
 import { launchImageLibrary } from 'react-native-image-picker';
 import ImageViewer from 'react-native-image-zoom-viewer';
 import Modal from 'react-native-modal';
-
-const database_name = "appDB.sqlite";
-let db;
-
-const openDatabase = (callback) => {
-  SQLite.openDatabase(
-    {
-      name: database_name,
-      location: 'default',
-    },
-    (database) => {
-      db = database;
-      console.log("Database OPENED");
-      callback();
-    },
-    (error) => {
-      console.error(error);
-    }
-  );
-};
+import { openDatabase, db } from '../db/db';
+import RNFS from 'react-native-fs';
 
 const DetalhesMaquinaScreen = ({ route, navigation }) => {
   const { maquinaId } = route.params;
@@ -33,7 +14,9 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
 
   useEffect(() => {
     openDatabase(() => {
-      buscarMaquina();
+      if (db) {
+        buscarMaquina();
+      }
     });
   }, []);
 
@@ -51,7 +34,7 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
           }
         },
         (error) => {
-          console.log(error);
+          console.log("Error: ", error);
         }
       );
     });
@@ -72,7 +55,7 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
           setEditMode(false);
         },
         (error) => {
-          console.log(error);
+          console.log("Error: ", error);
           Alert.alert('Erro', 'Houve um erro ao atualizar a máquina. Por favor, tente novamente.');
         }
       );
@@ -89,7 +72,7 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
           navigation.goBack();
         },
         (error) => {
-          console.log(error);
+          console.log("Error: ", error);
           Alert.alert('Erro', 'Houve um erro ao excluir a máquina. Por favor, tente novamente.');
         }
       );
@@ -99,9 +82,8 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
   const pickImage = async () => {
     const result = await launchImageLibrary({
       mediaType: 'photo',
-      includeBase64: true,
-      maxHeight: 800, // Define a resolução máxima para garantir que a qualidade não seja perdida
-      maxWidth: 800,
+      includeBase64: false,
+      quality: 1,
     });
 
     if (result.didCancel) {
@@ -109,7 +91,18 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
     } else if (result.error) {
       console.log('ImagePicker Error: ', result.error);
     } else if (result.assets && result.assets.length > 0) {
-      setMaquina({ ...maquina, imagem: result.assets[0].base64 });
+      const asset = result.assets[0];
+      const fileName = `${new Date().getTime()}_${asset.fileName}`;
+      const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
+
+      // Save image to local storage
+      RNFS.copyFile(asset.uri, filePath)
+        .then(() => {
+          setMaquina({ ...maquina, imagem: filePath });
+        })
+        .catch(error => {
+          console.log('Error saving image: ', error);
+        });
     }
   };
 
@@ -127,9 +120,9 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Modal visible={isModalVisible} transparent={true}>
+      <Modal isVisible={isModalVisible} onBackdropPress={() => setModalVisible(false)}>
         <ImageViewer
-          imageUrls={[{ url: `data:image/jpeg;base64,${maquina.imagem}` }]}
+          imageUrls={[{ url: `file://${maquina.imagem}` }]}
           enableSwipeDown={true}
           onCancel={() => setModalVisible(false)}
         />
@@ -137,7 +130,7 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
       {maquina.imagem && (
         <TouchableOpacity onPress={() => setModalVisible(true)}>
           <Image
-            source={{ uri: `data:image/jpeg;base64,${maquina.imagem}` }}
+            source={{ uri: `file://${maquina.imagem}` }}
             style={styles.image}
           />
         </TouchableOpacity>
