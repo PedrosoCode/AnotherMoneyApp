@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, Button, StyleSheet, Alert, Image, TouchableOpacity } from 'react-native';
 import { launchImageLibrary } from 'react-native-image-picker';
-import { openDatabase, db } from '../db/db';
 import RNFS from 'react-native-fs';
+import { inserirMaquina } from '../db/procedimentos';
 
 const CadastroMaquinaScreen = ({ navigation }) => {
   const [numeroSerie, setNumeroSerie] = useState('');
@@ -12,12 +12,6 @@ const CadastroMaquinaScreen = ({ navigation }) => {
   const [cliente, setCliente] = useState('');
   const [contato, setContato] = useState('');
   const [imagemPath, setImagemPath] = useState(null);
-
-  useEffect(() => {
-    openDatabase(() => {
-      console.log("Database is ready for operations.");
-    });
-  }, []);
 
   const pickImage = async () => {
     const result = await launchImageLibrary({
@@ -52,22 +46,19 @@ const CadastroMaquinaScreen = ({ navigation }) => {
       return;
     }
 
-    console.log('Salvando máquina:', { numeroSerie, modelo, cor, obs, cliente, contato, imagemPath });
+    const maquina = {
+      numero_serie: numeroSerie,
+      modelo: modelo,
+      cor: cor,
+      obs: obs,
+      cliente: cliente,
+      contato: contato,
+      imagem: imagemPath
+    };
 
-    db.transaction(tx => {
-      tx.executeSql(
-        'INSERT INTO tb_cad_maquina (numero_serie, modelo, cor, obs, cliente, contato, imagem) VALUES (?, ?, ?, ?, ?, ?, ?)',
-        [numeroSerie, modelo, cor, obs, cliente, contato, imagemPath],
-        (tx, results) => {
-          console.log('Máquina cadastrada com sucesso:', results);
-          Alert.alert('Sucesso', 'Máquina cadastrada com sucesso');
-          navigation.navigate('Home');
-        },
-        (error) => {
-          console.error('Erro ao cadastrar a máquina:', error);
-          Alert.alert('Erro', 'Houve um erro ao cadastrar a máquina. Por favor, tente novamente.');
-        }
-      );
+    inserirMaquina(maquina, (results) => {
+      Alert.alert('Sucesso', 'Máquina cadastrada com sucesso');
+      navigation.navigate('Home');
     });
   };
 

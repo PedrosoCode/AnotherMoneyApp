@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-import { openDatabase, db } from '../db/db'; // Ajuste o caminho conforme necessário
+import { listarMaquinas } from '../db/procedimentos'; 
 
 const ListagemMaquinasScreen = () => {
   const [maquinas, setMaquinas] = useState([]);
@@ -9,42 +9,12 @@ const ListagemMaquinasScreen = () => {
   const isFocused = useIsFocused();
 
   useEffect(() => {
-    openDatabase(() => {
-      listarMaquinas();
-    });
-  }, []);
-
-  useEffect(() => {
     if (isFocused) {
-      listarMaquinas();
+      listarMaquinas((result) => {
+        setMaquinas(result);
+      });
     }
   }, [isFocused]);
-
-  const listarMaquinas = () => {
-    if (!db) {
-      console.log("Database not initialized");
-      return;
-    }
-
-    db.transaction(tx => {
-      tx.executeSql(
-        'SELECT * FROM tb_cad_maquina',
-        [],
-        (tx, results) => {
-          let rows = results.rows;
-          let maquinas = [];
-          for (let i = 0; i < rows.length; i++) {
-            maquinas.push(rows.item(i));
-          }
-          console.log('Máquinas recuperadas:', maquinas); // Log para verificação
-          setMaquinas(maquinas);
-        },
-        (error) => {
-          console.log("Erro ao recuperar as máquinas:", error);
-        }
-      );
-    });
-  };
 
   const renderItem = ({ item }) => (
     <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('DetalhesMaquina', { maquinaId: item.id })}>
