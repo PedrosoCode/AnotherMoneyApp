@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, Image } from 'react-native';
+import { View, Text, TextInput, Button, StyleSheet, Alert, Image, TouchableOpacity, ScrollView } from 'react-native';
 import SQLite from 'react-native-sqlite-storage';
+import { launchImageLibrary } from 'react-native-image-picker';
+import ImageViewer from 'react-native-image-zoom-viewer';
+import Modal from 'react-native-modal';
 
 const database_name = "appDB.sqlite";
 let db;
@@ -26,6 +29,7 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
   const { maquinaId } = route.params;
   const [maquina, setMaquina] = useState(null);
   const [editMode, setEditMode] = useState(false);
+  const [isModalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
     openDatabase(() => {
@@ -92,6 +96,27 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
     });
   };
 
+  const pickImage = async () => {
+    const result = await launchImageLibrary({
+      mediaType: 'photo',
+      includeBase64: true,
+      maxHeight: 800, // Define a resolução máxima para garantir que a qualidade não seja perdida
+      maxWidth: 800,
+    });
+
+    if (result.didCancel) {
+      console.log('User cancelled image picker');
+    } else if (result.error) {
+      console.log('ImagePicker Error: ', result.error);
+    } else if (result.assets && result.assets.length > 0) {
+      setMaquina({ ...maquina, imagem: result.assets[0].base64 });
+    }
+  };
+
+  const removeImage = () => {
+    setMaquina({ ...maquina, imagem: null });
+  };
+
   if (!maquina) {
     return (
       <View style={styles.container}>
@@ -101,12 +126,21 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
   }
 
   return (
-    <View style={styles.container}>
-      {maquina.imagem && (
-        <Image
-          source={{ uri: `data:image/jpeg;base64,${maquina.imagem}` }}
-          style={styles.image}
+    <ScrollView contentContainerStyle={styles.container}>
+      <Modal visible={isModalVisible} transparent={true}>
+        <ImageViewer
+          imageUrls={[{ url: `data:image/jpeg;base64,${maquina.imagem}` }]}
+          enableSwipeDown={true}
+          onCancel={() => setModalVisible(false)}
         />
+      </Modal>
+      {maquina.imagem && (
+        <TouchableOpacity onPress={() => setModalVisible(true)}>
+          <Image
+            source={{ uri: `data:image/jpeg;base64,${maquina.imagem}` }}
+            style={styles.image}
+          />
+        </TouchableOpacity>
       )}
       <TextInput
         style={styles.input}
@@ -150,13 +184,19 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
         onChangeText={(text) => setMaquina({ ...maquina, contato: text })}
         editable={editMode}
       />
+      {editMode && (
+        <>
+          <Button title="Adicionar Imagem" onPress={pickImage} />
+          {maquina.imagem && <Button title="Remover Imagem" onPress={removeImage} color="red" />}
+        </>
+      )}
       {editMode ? (
         <Button title="Salvar" onPress={handleSave} />
       ) : (
         <Button title="Editar" onPress={() => setEditMode(true)} />
       )}
       <Button title="Excluir" onPress={handleDelete} color="red" />
-    </View>
+    </ScrollView>
   );
 };
 

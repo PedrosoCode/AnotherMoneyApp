@@ -1,27 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, FlatList, StyleSheet, Image, TouchableOpacity } from 'react-native';
-import SQLite from 'react-native-sqlite-storage';
 import { useNavigation, useIsFocused } from '@react-navigation/native';
-
-const database_name = "appDB.sqlite";
-let db;
-
-const openDatabase = (callback) => {
-  SQLite.openDatabase(
-    {
-      name: database_name,
-      location: 'default',
-    },
-    (database) => {
-      db = database;
-      console.log("Database OPENED");
-      callback();
-    },
-    (error) => {
-      console.error(error);
-    }
-  );
-};
+import { openDatabase, db } from '../db/db'; // Assumindo que o arquivo se chama db.js
 
 const ListagemMaquinasScreen = () => {
   const [maquinas, setMaquinas] = useState([]);
@@ -30,13 +10,17 @@ const ListagemMaquinasScreen = () => {
 
   useEffect(() => {
     openDatabase(() => {
-      listarMaquinas();
+      if (db) {
+        listarMaquinas();
+      }
     });
   }, []);
 
   useEffect(() => {
     if (isFocused) {
-      listarMaquinas();
+      if (db) {
+        listarMaquinas();
+      }
     }
   }, [isFocused]);
 
@@ -54,7 +38,7 @@ const ListagemMaquinasScreen = () => {
           setMaquinas(maquinas);
         },
         (error) => {
-          console.log(error);
+          console.log("Error: ", error);
         }
       );
     });
