@@ -17,7 +17,7 @@ export const listarMaquinas = (callback) => {
         callback(maquinas);
       },
       (error) => {
-        console.log("Erro ao recuperar as máquinas:", error);
+        console.error("Erro ao recuperar as máquinas:", error);
       }
     );
   });
@@ -37,7 +37,7 @@ export const buscarMaquinaPorId = (id, callback) => {
         }
       },
       (error) => {
-        console.log("Erro ao recuperar a máquina:", error);
+        console.error("Erro ao recuperar a máquina:", error);
       }
     );
   });
@@ -53,7 +53,7 @@ export const inserirMaquina = (maquina, callback) => {
         callback(results);
       },
       (error) => {
-        console.log("Erro ao inserir a máquina:", error);
+        console.error("Erro ao inserir a máquina:", error);
       }
     );
   });
@@ -69,7 +69,7 @@ export const atualizarMaquina = (id, maquina, callback) => {
         callback(results);
       },
       (error) => {
-        console.log("Erro ao atualizar a máquina:", error);
+        console.error("Erro ao atualizar a máquina:", error);
       }
     );
   });
@@ -85,7 +85,7 @@ export const excluirMaquina = (id, callback) => {
         callback(results);
       },
       (error) => {
-        console.log("Erro ao excluir a máquina:", error);
+        console.error("Erro ao excluir a máquina:", error);
       }
     );
   });

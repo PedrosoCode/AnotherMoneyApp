@@ -16,8 +16,7 @@ const openDatabase = (callback) => {
     (database) => {
       db = database;
       console.log("Database OPENED");
-      createTable();
-      callback();
+      createTable(callback);
     },
     (error) => {
       console.error("Error opening database: ", error);
@@ -25,7 +24,7 @@ const openDatabase = (callback) => {
   );
 };
 
-const createTable = () => {
+const createTable = (callback) => {
   db.transaction(tx => {
     tx.executeSql(
       `CREATE TABLE IF NOT EXISTS tb_cad_maquina (
@@ -41,6 +40,7 @@ const createTable = () => {
       [],
       () => {
         console.log("Tabela criada com sucesso");
+        if (callback) callback();
       },
       error => {
         console.log("Erro ao criar a tabela", error);
