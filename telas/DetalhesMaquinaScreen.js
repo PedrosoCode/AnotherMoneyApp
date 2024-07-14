@@ -1,15 +1,13 @@
+// DetalhesMaquinaScreen.js
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, Button, StyleSheet, Alert, Image, TouchableOpacity, ScrollView } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
-import ImageViewer from 'react-native-image-zoom-viewer';
+import { View, Text, Button, StyleSheet, Alert, Image, TouchableOpacity, ScrollView } from 'react-native';
 import Modal from 'react-native-modal';
+import ImageViewer from 'react-native-image-zoom-viewer';
 import { openDatabase, db } from '../db/db';
-import RNFS from 'react-native-fs';
 
 const DetalhesMaquinaScreen = ({ route, navigation }) => {
   const { maquinaId } = route.params;
   const [maquina, setMaquina] = useState(null);
-  const [editMode, setEditMode] = useState(false);
   const [isModalVisible, setModalVisible] = useState(false);
 
   useEffect(() => {
@@ -40,28 +38,6 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
     });
   };
 
-  const handleSave = () => {
-    if (maquina.numero_serie.trim() === '' || maquina.modelo.trim() === '') {
-      Alert.alert('Erro', 'Por favor, preencha todos os campos obrigatórios');
-      return;
-    }
-
-    db.transaction(tx => {
-      tx.executeSql(
-        'UPDATE tb_cad_maquina SET numero_serie = ?, modelo = ?, cor = ?, obs = ?, cliente = ?, contato = ?, imagem = ? WHERE id = ?',
-        [maquina.numero_serie, maquina.modelo, maquina.cor, maquina.obs, maquina.cliente, maquina.contato, maquina.imagem, maquinaId],
-        (tx, results) => {
-          Alert.alert('Sucesso', 'Máquina atualizada com sucesso');
-          setEditMode(false);
-        },
-        (error) => {
-          console.log("Error: ", error);
-          Alert.alert('Erro', 'Houve um erro ao atualizar a máquina. Por favor, tente novamente.');
-        }
-      );
-    });
-  };
-
   const handleDelete = () => {
     db.transaction(tx => {
       tx.executeSql(
@@ -77,37 +53,6 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
         }
       );
     });
-  };
-
-  const pickImage = async () => {
-    const result = await launchImageLibrary({
-      mediaType: 'photo',
-      includeBase64: false,
-      quality: 1,
-    });
-
-    if (result.didCancel) {
-      console.log('User cancelled image picker');
-    } else if (result.error) {
-      console.log('ImagePicker Error: ', result.error);
-    } else if (result.assets && result.assets.length > 0) {
-      const asset = result.assets[0];
-      const fileName = `${new Date().getTime()}_${asset.fileName}`;
-      const filePath = `${RNFS.DocumentDirectoryPath}/${fileName}`;
-
-      // Save image to local storage
-      RNFS.copyFile(asset.uri, filePath)
-        .then(() => {
-          setMaquina({ ...maquina, imagem: filePath });
-        })
-        .catch(error => {
-          console.log('Error saving image: ', error);
-        });
-    }
-  };
-
-  const removeImage = () => {
-    setMaquina({ ...maquina, imagem: null });
   };
 
   if (!maquina) {
@@ -135,59 +80,19 @@ const DetalhesMaquinaScreen = ({ route, navigation }) => {
           />
         </TouchableOpacity>
       )}
-      <TextInput
-        style={styles.input}
-        placeholder="Número de Série"
-        value={maquina.numero_serie}
-        onChangeText={(text) => setMaquina({ ...maquina, numero_serie: text })}
-        editable={editMode}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Modelo"
-        value={maquina.modelo}
-        onChangeText={(text) => setMaquina({ ...maquina, modelo: text })}
-        editable={editMode}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Cor"
-        value={maquina.cor}
-        onChangeText={(text) => setMaquina({ ...maquina, cor: text })}
-        editable={editMode}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Observações"
-        value={maquina.obs}
-        onChangeText={(text) => setMaquina({ ...maquina, obs: text })}
-        editable={editMode}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Cliente"
-        value={maquina.cliente}
-        onChangeText={(text) => setMaquina({ ...maquina, cliente: text })}
-        editable={editMode}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Contato"
-        value={maquina.contato}
-        onChangeText={(text) => setMaquina({ ...maquina, contato: text })}
-        editable={editMode}
-      />
-      {editMode && (
-        <>
-          <Button title="Adicionar Imagem" onPress={pickImage} />
-          {maquina.imagem && <Button title="Remover Imagem" onPress={removeImage} color="red" />}
-        </>
-      )}
-      {editMode ? (
-        <Button title="Salvar" onPress={handleSave} />
-      ) : (
-        <Button title="Editar" onPress={() => setEditMode(true)} />
-      )}
+      <Text style={styles.label}>Número de Série:</Text>
+      <Text style={styles.value}>{maquina.numero_serie}</Text>
+      <Text style={styles.label}>Modelo:</Text>
+      <Text style={styles.value}>{maquina.modelo}</Text>
+      <Text style={styles.label}>Cor:</Text>
+      <Text style={styles.value}>{maquina.cor}</Text>
+      <Text style={styles.label}>Observações:</Text>
+      <Text style={styles.value}>{maquina.obs}</Text>
+      <Text style={styles.label}>Cliente:</Text>
+      <Text style={styles.value}>{maquina.cliente}</Text>
+      <Text style={styles.label}>Contato:</Text>
+      <Text style={styles.value}>{maquina.contato}</Text>
+      <Button title="Editar" onPress={() => navigation.navigate('EditarMaquina', { maquinaId })} />
       <Button title="Excluir" onPress={handleDelete} color="red" />
     </ScrollView>
   );
@@ -200,13 +105,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
   },
-  input: {
-    height: 40,
-    borderColor: '#ccc',
-    borderWidth: 1,
-    marginBottom: 16,
-    paddingHorizontal: 8,
-    width: '80%',
+  label: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginTop: 8,
+  },
+  value: {
+    fontSize: 16,
+    marginBottom: 8,
   },
   image: {
     width: 200,
